@@ -59,6 +59,10 @@ zk-badges/calldata.txt
 zk-badges/calldata_hex.txt
 tongo-donation-context-*.txt
 
+# Git worktrees
+.worktrees/
+worktrees/
+
 # Vendor dependencies (if using submodules or vendoring)
 vendor/
 
