@@ -1,0 +1,10 @@
+[package]
+name = "balance_tier_verifier"
+version = "0.1.0"
+edition = "2024_07"
+
+[dependencies]
+starknet = "2.8.0"
+
+[[target]]
+name = "balance_tier_verifier"
