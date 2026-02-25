@@ -17,6 +17,13 @@
       "declaration_tx": "0x055f21b6b382f00d1f5b028fc16317de0571c421e7ee03a8533ca2b2e8a1d47d",
       "deployment_tx": "0x048a87e408dd2153a1c092a1fb163b1aad698d0cefc8e942de4456a4ba383ced",
       "artifact": "donation_badge_verifier/target/release/donation_badge_verifier_DonationBadge.compiled_contract_class.json"
+    },
+    "BalanceTierVerifier": {
+      "class_hash": "TODO",
+      "address": "TODO",
+      "declaration_tx": "TODO",
+      "deployment_tx": "TODO",
+      "artifact": "balance_tier_verifier/target/dev/balance_tier_verifier_BalanceTierVerifier.compiled_contract_class.json"
     }
   },
   "notes": [
