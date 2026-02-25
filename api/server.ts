@@ -8,6 +8,7 @@ let poseidon: any = null;
 const apiDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(apiDir, "..");
 const circuitDir = path.join(repoRoot, "zk-badges", "donation_badge");
+const balanceTierCircuitDir = path.join(repoRoot, "zk-badges", "balance_tier");
 
 async function getPoseidon() {
   if (!poseidon) {
@@ -42,9 +43,9 @@ function decodeOutput(output?: Uint8Array | string | null): string {
   return decoder.decode(output);
 }
 
-async function runCmd(label: string, cmd: string): Promise<string> {
+async function runCmd(label: string, cmd: string, circuit: string = circuitDir): Promise<string> {
   const runtimePath = (process.env.PATH || "").replace(/"/g, '\\"');
-  const shellCmd = `export PATH="${runtimePath}" && cd "${circuitDir}" && ${cmd}`;
+  const shellCmd = `export PATH="${runtimePath}" && cd "${circuit}" && ${cmd}`;
   const proc = await $`bash -lc ${shellCmd}`.nothrow();
   const stdout = decodeOutput(proc.stdout);
   const stderr = decodeOutput(proc.stderr);
@@ -73,6 +74,7 @@ const server = Bun.serve({
       return new Response(null, { headers });
     }
 
+    // Donation Badge Proof Endpoint (existing)
     if (req.method === "POST" && req.url.includes("/api/generate-proof")) {
       try {
         const body = await req.json();
@@ -117,6 +119,57 @@ donation_commitment = "${commitment}"
         return new Response(JSON.stringify({ error: error.message || String(error), success: false }), { headers, status: 500 });
       }
     }
+
+    // Balance Tier Proof Endpoint (new)
+    if (req.method === "POST" && req.url.includes("/api/generate-balance-proof")) {
+      try {
+        const body = await req.json();
+        const { owner_id, value, datetime } = body;
+        console.log("Generating balance tier proof for:", { owner_id, value, datetime });
+
+        // Convert UUID to bytes array
+        const uuidStr = owner_id.replace(/-/g, "");
+        const uuidBytes: number[] = [];
+        for (let i = 0; i < uuidStr.length; i += 2) {
+          uuidBytes.push(parseInt(uuidStr.substr(i, 2), 16));
+        }
+        while (uuidBytes.length < 36) uuidBytes.push(0);
+
+        const proverToml = `owner_id = ${JSON.stringify(uuidBytes)}
+value = ${value}
+datetime = ${datetime}
+`;
+        writeFileSync(path.join(balanceTierCircuitDir, "Prover.toml"), proverToml);
+
+        console.log("Running nargo execute...");
+        await runCmd("nargo execute", "nargo execute witness", balanceTierCircuitDir);
+        console.log("Running bb prove...");
+        await runCmd(
+          "bb prove",
+          "bb prove_ultra_keccak_honk -b ./target/balance_tier.json -w ./target/witness.gz -o ./target/proof",
+          balanceTierCircuitDir,
+        );
+        console.log("Running bb write_vk...");
+        await runCmd(
+          "bb write_vk",
+          "bb write_vk_ultra_keccak_honk -b ./target/balance_tier.json -o ./target/vk",
+          balanceTierCircuitDir,
+        );
+        console.log("Running garaga calldata...");
+        const result = await runCmd(
+          "garaga calldata",
+          "garaga calldata --system ultra_keccak_honk --vk ./target/vk --proof ./target/proof --format array",
+          balanceTierCircuitDir,
+        );
+
+        console.log("Balance tier proof generated successfully!");
+        return new Response(JSON.stringify({ calldata: result.trim(), success: true }), { headers });
+      } catch (error: any) {
+        console.error("Error:", error.message || error);
+        return new Response(JSON.stringify({ error: error.message || String(error), success: false }), { headers, status: 500 });
+      }
+    }
+
     return new Response(JSON.stringify({ error: "Not found" }), { headers, status: 404 });
   },
 });
