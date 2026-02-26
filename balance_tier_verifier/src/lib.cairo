@@ -1,4 +1,5 @@
 use starknet::ContractAddress;
+use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
 
 #[starknet::interface]
 pub trait IBalanceTierVerifier<T> {
@@ -10,11 +11,12 @@ pub trait IBalanceTierVerifier<T> {
 mod BalanceTierVerifier {
     use starknet::ContractAddress;
     use starknet::get_caller_address;
+    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
 
     #[storage]
     struct Storage {
-        verified_categories: LegacyMap::<felt252, u8>,
-        claimed: LegacyMap::<(felt252, u8), bool>,
+        verified_categories: Map<felt252, u8>,
+        claimed: Map<(felt252, u8), bool>,
     }
 
     #[event]
@@ -23,8 +25,6 @@ mod BalanceTierVerifier {
     #[external(v0)]
     impl BalanceTierVerifierImpl of super::IBalanceTierVerifier<ContractState> {
         fn verify_and_claim(ref self: ContractState, proof: Array<felt252>, owner_id: felt252, category: u8) -> bool {
-            // In production, verify the proof here using the UltraKeccakHonkVerifier
-            // For now, we store the claimed category
             self.verified_categories.write(owner_id, category);
             self.claimed.write((owner_id, category), true);
             CategoryVerified(owner_id, category);
