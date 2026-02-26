@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2024_07"
 
 [dependencies]
-starknet = "2.8.0"
+starknet = "2.5"
 
-[[target]]
-name = "balance_tier_verifier"
+[lib]
+sierra = true
+casm = true
