@@ -1,6 +1,6 @@
-# Starknet Privacy Toolkit
+# Starknet Privacy Toolkit (Tongo + Garaga/Noir)
 
-End-to-end reference implementation for private transfers and ZK proofs powered by Noir + Garaga. This toolkit provides a privacy-preserving balance tier verification system using zero-knowledge proofs.
+End-to-end reference implementation for private transfers (Tongo) and ZK proofs powered by Noir + Garaga. The donation badge is a use case demo of the ZK stack, not the core product.
 
 ---
 
